@@ -1,0 +1,88 @@
+{
+  "_from": "multi-ini",
+  "_id": "multi-ini@1.0.1",
+  "_inBundle": false,
+  "_integrity": "sha1-YgDH0V2+mybOarr1ZyfRjEbeS14=",
+  "_location": "/multi-ini",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "multi-ini",
+    "name": "multi-ini",
+    "escapedName": "multi-ini",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/multi-ini/-/multi-ini-1.0.1.tgz",
+  "_shasum": "6200c7d15dbe9b26ce6abaf56727d18c46de4b5e",
+  "_spec": "multi-ini",
+  "_where": "/Users/tqwhite/tmpp/inside",
+  "author": {
+    "name": "Michael Iwersen",
+    "email": "mi.iwersen@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/evangelion1204/multi-ini/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "lodash": "^2.4.1"
+  },
+  "deprecated": false,
+  "description": "An ini-file parser which supports multi line, multiple levels and arrays to get a maximum of compatibility with Zend config files.",
+  "devDependencies": {
+    "babel-cli": "^6.3.17",
+    "babel-plugin-check-es2015-constants": "^6.3.13",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.4.0",
+    "babel-plugin-transform-es2015-block-scoping": "^6.3.13",
+    "babel-plugin-transform-es2015-classes": "^6.3.15",
+    "babel-plugin-transform-es2015-destructuring": "^6.18.0",
+    "babel-plugin-transform-es2015-for-of": "^6.18.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.3.16",
+    "babel-plugin-transform-es2015-parameters": "^6.3.26",
+    "babel-plugin-transform-es2015-shorthand-properties": "^6.18.0",
+    "babel-plugin-transform-es2015-template-literals": "^6.3.13",
+    "babel-plugin-transform-object-assign": "^6.8.0",
+    "babel-plugin-transform-object-rest-spread": "^6.19.0",
+    "babel-register": "^6.18.0",
+    "benchmark": "^2.0.0",
+    "chai": "^3.4.1",
+    "istanbul": "^1.1.0-alpha.1",
+    "mocha": "^2.3.4",
+    "sinon": "^1.17.2",
+    "sinon-chai": "^2.8.0"
+  },
+  "homepage": "https://github.com/evangelion1204/multi-ini",
+  "keywords": [
+    "ini",
+    "zend",
+    "config",
+    "multi-line",
+    "multi-level"
+  ],
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/evangelion1204/multi-ini/blob/master/LICENSE"
+    }
+  ],
+  "main": "lib/index.js",
+  "name": "multi-ini",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/evangelion1204/multi-ini.git"
+  },
+  "scripts": {
+    "coverage": "babel-node ./node_modules/.bin/istanbul cover _mocha",
+    "distribute": "npm publish",
+    "predistribute": "babel src --out-dir lib",
+    "test": "babel-node ./node_modules/.bin/_mocha"
+  },
+  "version": "1.0.1"
+}

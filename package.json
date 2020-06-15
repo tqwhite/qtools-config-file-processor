@@ -1,0 +1,16 @@
+{
+  "name": "qtools-config-file-processor",
+  "version": "1.0.0",
+  "description": "wrapper for multi-ini that converts strings to numbers and others stuff",
+  "main": "qtools-config-file-processor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "TQ White II",
+  "license": "ISC",
+  "dependencies": {
+    "multi-ini": "^1.0.1"
+  },
+  "devDependencies": {},
+  "keywords": []
+}
