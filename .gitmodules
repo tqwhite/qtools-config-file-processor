@@ -1,0 +1,6 @@
+[submodule "qtFunctionalLib"]
+	path = qtFunctionalLib
+	url = git@github.com:tqwhite/qtFunctionalLib.git
+[submodule "node_modules/qtFunctionalLib"]
+	path = node_modules/qtFunctionalLib
+	url = git@github.com:tqwhite/qtFunctionalLib.git

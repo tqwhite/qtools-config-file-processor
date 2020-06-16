@@ -19,14 +19,11 @@ Instead of the default,
 
     {‘0’:’zero’, ‘1’:’one’}
 
-
-There is one dependency, [qtFunctionalLib](https://github.com/tqwhite/qtFunctionalLib).
-
 For example…
 
     
     const configFileProcessorGen=require('qtools-config-file-processor');
-    const configFileProcessor=new configFileProcessorGen({});
+    const configFileProcessor=new configFileProcessorGen();
     
     const config=configFileProcessor.getConfig('/Path/to/test.ini')
     

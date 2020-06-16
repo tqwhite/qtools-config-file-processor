@@ -1,6 +1,5 @@
 'use strict';
 
-const clone=require('./lib/qtools-clone');
 const multiIni=require('multi-ini')
 const fs=require('fs');
 const path = require('path');
@@ -12,22 +11,20 @@ var qtLib=require('qtFunctionalLib');
 var moduleFunction = function(args={}) {
 	const {logger={}, arrayItemsName='arrayItems'}=args;
 
-	logger.warn?logger.warn: message=>console.log(`WARNING: ${message}`);
-	logger.error?logger.error: message=>console.log(`ERROR: ${message}`);
+	logger.warn=logger.warn?logger.warn: message=>console.log(`WARNING: ${message}`);
+	logger.error=logger.error?logger.error: message=>console.log(`ERROR: ${message}`);
 
 
-
-	const upgradeConfigItems = (config, additionalProperties = {}) => {
-		const outObj = clone(config);
-		for (var i in config[arrayItemsName]) {
-			if (!config[arrayItemsName].hasOwnProperty(i)) {
+	const upgradeConfigItems = (outObj, additionalProperties = {}) => {
+		for (var i in outObj[arrayItemsName]) {
+			if (!outObj[arrayItemsName].hasOwnProperty(i)) {
 				continue;
 			}
 
-			var element = config[arrayItemsName][i];
+			var element = outObj[arrayItemsName][i];
 			outObj.qtPutSurePath(element, 'placeholder');
 
-			const inObj = config.qtGetSurePath( element, []);
+			const inObj = outObj.qtGetSurePath( element, []);
 
 			const outArray = inObj.qtNumberKeysToArray(); //qtNumberKeysToArray() closes holes in array
 			outObj.qtPutSurePath(element, outArray);
@@ -37,24 +34,24 @@ var moduleFunction = function(args={}) {
 	};
 
 	const findGoodConfigPath = (pathParm, workingDirectory, resolve) => {
-		let result = fs.realpathSync(pathParm);
+		let result = fs.existsSync(pathParm)?fs.realpathSync(pathParm):'';
 		workingDirectory = workingDirectory?fs.realpathSync(workingDirectory):'';
 		if (result) {
 			return result;
 		} else if (workingDirectory) {
 			while (
 				workingDirectory != '/' &&
-				!qtools.realPath(path.join(workingDirectory, pathParm))
+				!fs.existsSync(path.join(workingDirectory, pathParm))
 			) {
 				if (resolve) {
-					//qtools.logDebug(`tried: ${path.join(workingDirectory, pathParm)}`);
+					logger.warn(`tried: ${path.join(workingDirectory, pathParm)}`);
 				}
 				workingDirectory = path.dirname(workingDirectory);
 			}
 			const result =
 				workingDirectory != '/' ? path.join(workingDirectory, pathParm) : '';
 			if (resolve) {
-				//qtools.logDebug(`finished with: ${result}`);
+				logger.warn(`finished with: ${result}`);
 			}
 			return result;
 		}
@@ -97,7 +94,7 @@ var moduleFunction = function(args={}) {
 
 	this.getConfig = (
 		configPath,
-		workingDirectory,
+		workingDirectory='.',
 		options = {}
 	) => {
 		const { resolve = false, arrayPaths } = options;
