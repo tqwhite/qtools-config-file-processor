@@ -3,7 +3,7 @@
 const multiIni=require('multi-ini')
 const fs=require('fs');
 const path = require('path');
-var qtLib=require('qtFunctionalLib');
+var qtLib=require('qtools-functional-library');
 
 
 //START OF moduleFunction() ============================================================
