@@ -1,41 +1,28 @@
 'use strict';
 
-const multiIni=require('multi-ini')
-const fs=require('fs');
+const multiIni = require('multi-ini');
+const fs = require('fs');
 const path = require('path');
-var qtLib=require('qtools-functional-library');
-
+var qtLib = require('qtools-functional-library');
 
 //START OF moduleFunction() ============================================================
 
-var moduleFunction = function(args={}) {
-	const {logger={}, arrayItemsName='arrayItems'}=args;
+var moduleFunction = function(args = {}) {
+	const { logger = {}, arrayItemsName = 'arrayItems' } = args;
 
-	logger.warn=logger.warn?logger.warn: message=>console.log(`WARNING: ${message}`);
-	logger.error=logger.error?logger.error: message=>console.log(`ERROR: ${message}`);
-
-
-	const upgradeConfigItems = (outObj, additionalProperties = {}) => {
-		for (var i in outObj[arrayItemsName]) {
-			if (!outObj[arrayItemsName].hasOwnProperty(i)) {
-				continue;
-			}
-
-			var element = outObj[arrayItemsName][i];
-			outObj.qtPutSurePath(element, 'placeholder');
-
-			const inObj = outObj.qtGetSurePath( element, []);
-
-			const outArray = inObj.qtNumberKeysToArray(); //qtNumberKeysToArray() closes holes in array
-			outObj.qtPutSurePath(element, outArray);
-		}
-
-		return Object.assign(additionalProperties, outObj);
-	};
+	logger.warn = logger.warn
+		? logger.warn
+		: message => console.log(`WARNING: ${message}`);
+	logger.error = logger.error
+		? logger.error
+		: message => console.log(`ERROR: ${message}`);
+	
 
 	const findGoodConfigPath = (pathParm, workingDirectory, resolve) => {
-		let result = fs.existsSync(pathParm)?fs.realpathSync(pathParm):'';
-		workingDirectory = workingDirectory?fs.realpathSync(workingDirectory):'';
+		let result = fs.existsSync(pathParm) ? fs.realpathSync(pathParm) : '';
+		workingDirectory = workingDirectory
+			? fs.realpathSync(workingDirectory)
+			: '';
 		if (result) {
 			return result;
 		} else if (workingDirectory) {
@@ -59,8 +46,8 @@ var moduleFunction = function(args={}) {
 		return result;
 	};
 
-	let multiIni = require('multi-ini');
-	multiIni = new multiIni.Class({
+	const multiIniGen = require('multi-ini');
+	const multiIni = new multiIniGen.Class({
 		filters: [
 			value => {
 				if (value == /^''$/) {
@@ -89,16 +76,8 @@ var moduleFunction = function(args={}) {
 		]
 	});
 
-	//Object.assign(this, multiIni);
-	//this.upgradeConfigItems = upgradeConfigItems;
-
-	this.getConfig = (
-		configPath,
-		workingDirectory='.',
-		options = {}
-	) => {
-		const { resolve = false, arrayPaths } = options;
-		let config;
+	this.getConfig = (configPath, workingDirectory = '.', options = {}) => {
+		const { resolve = false } = options;
 		const configurationSourceFilePath = findGoodConfigPath(
 			configPath,
 			workingDirectory,
@@ -107,25 +86,19 @@ var moduleFunction = function(args={}) {
 		if (!configurationSourceFilePath) {
 			logger.error(`no config file found ${configPath}`);
 			return;
-		} else {
-			const tmp = multiIni.read(configurationSourceFilePath); //this is multi-ini with post-processing
-			const configurationModificationDate = fs
-				.statSync(configurationSourceFilePath)
-				.mtime.toLocaleString();
-			config = upgradeConfigItems(tmp, {
+		}
+
+		const configurationModificationDate = fs
+			.statSync(configurationSourceFilePath)
+			.mtime.toLocaleString();
+
+		const config = multiIni
+			.read(configurationSourceFilePath)
+			.qtNumberKeysToArray()
+			.qtMerge({
 				configurationSourceFilePath,
 				configurationModificationDate
 			});
-		}
-
-		if (arrayPaths) {
-			arrayPaths.forEach(itemPath =>
-				config.qtPutSurePath(
-					itemPath,
-					config.qtGetSurePath(itemPath, {}).qtNumberKeysToArray()
-				)
-			);
-		}
 
 		return config;
 	};
