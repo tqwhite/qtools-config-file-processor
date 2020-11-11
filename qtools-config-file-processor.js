@@ -95,10 +95,10 @@ var moduleFunction = function(args = {}) {
 		const config = multiIni
 			.read(configurationSourceFilePath)
 			.qtNumberKeysToArray()
-			.qtMerge({
+			.qtMerge({_meta:{
 				configurationSourceFilePath,
 				configurationModificationDate
-			});
+			}});
 
 		return config;
 	};
