@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/tqwhite/qtools-config-file-processor#readme",
   "dependencies": {
-    "multi-ini": "^1.0.1"
+    "multi-ini": "^2.1.2"
   },
   "devDependencies": {},
   "keywords": [
