@@ -1,6 +1,6 @@
 {
   "name": "qtools-config-file-processor",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "wrapper for multi-ini that converts strings to numbers and others stuff",
   "main": "qtools-config-file-processor.js",
   "scripts": {
