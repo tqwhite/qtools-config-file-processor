@@ -92,13 +92,26 @@ var moduleFunction = function(args = {}) {
 			.statSync(configurationSourceFilePath)
 			.mtime.toLocaleString();
 
-		const config = multiIni
+		let config = multiIni
 			.read(configurationSourceFilePath)
 			.qtNumberKeysToArray()
-			.qtMerge({_meta:{
-				configurationSourceFilePath,
-				configurationModificationDate
-			}});
+			.qtMerge({
+				_meta: {
+					configurationSourceFilePath,
+					configurationModificationDate
+				}
+			});
+
+
+		if (typeof config._substitutions == 'object') {
+			const configString = JSON.stringify(config);
+			const revisedConfigString = configString.qtTemplateReplace(config._substitutions);
+			try {
+				config = JSON.parse(revisedConfigString);
+			} catch (err) {
+				throw `qtools-config-files-processor says, 'substitutions' processing is actually string processing on JSON.stringify(config). The result does not JSON.parse(revisedConfigString). The error message is ${err.toString()}.`;
+			}
+		}
 
 		return config;
 	};
