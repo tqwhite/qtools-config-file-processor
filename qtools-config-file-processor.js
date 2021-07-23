@@ -104,15 +104,46 @@ var moduleFunction = function(args = {}) {
 				}
 			});
 
+		const configString = JSON.stringify(config);
+		const includedFiles=[];
+
+		if (config._includes && config._includes.length) {
+			const appendages = config._includes.map(filePath => {
+				if (!fs.existsSync(filePath)) {
+					const newPath = path.resolve(
+						path.dirname(configurationSourceFilePath),
+						filePath
+					);
+					if (!fs.existsSync(newPath)) {
+						throw `Bad relative file path. ${filePath} resolves to ${newPath} which does not exist (From config ${configurationSourceFilePath}.)`;
+					}
+					filePath = newPath;
+				}
+
+				const appendage = multiIni.read(filePath).qtNumberKeysToArray();
+				if (Object.keys(appendage).length == 0) {
+					throw `No properties in _merge file. This is usually because there is no top level .ini [section]. multiIni insists on this. Bad filepath is ${filePath}`;
+				}
+	
+				includedFiles.push(filePath);
+				return appendage;
+			});
+
+			config = appendages.reduce((result, component) => {
+				return result.qtMerge(component);
+			}, config);
+		}
+
 		//substitutions supplied in args are assumed to be client overrides and are processed
 		//first. That means that the tokens are not available for subsitution by the
 		//values in the file.
 
 		if (typeof options.userSubstitutions == 'object') {
-			const configString = JSON.stringify(config); 
-			 const revisedConfigString = configString.qtTemplateReplace(
+			const configString = JSON.stringify(config);
+			const revisedConfigString = configString.qtTemplateReplace(
 				options.userSubstitutions
 			);
+			
 
 			try {
 				config = JSON.parse(revisedConfigString);
@@ -137,6 +168,9 @@ var moduleFunction = function(args = {}) {
 		if (injectedItems) {
 			config.injectedItems = injectedItems;
 		}
+		
+		config._meta._substitutions=config._substitutions;
+		config._meta._includes=includedFiles;
 
 		return config;
 	};

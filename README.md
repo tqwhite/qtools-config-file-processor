@@ -23,7 +23,7 @@ Instead of the default,
     {‘0’:’zero’, ‘1’:’one’}
 
 
-A special .ini section, ``_substitutions``, can be added, substitutions,
+**A special .ini section, ``_substitutions``, can be added**, substitutions,
 whose elements are substituted __as strings__ into a JSON version of the
 config using .qtTemplateReplace() tags, eg, <!substitutionTag!>. The
 _substitutions section is left in the config. Only use values that
@@ -42,36 +42,10 @@ Eg,
 will be presented as
 
     console.log(testSection.HELLO_Name); //=> 'This is a test'
-    
 
-A section named _meta is injected into the config that identifies the 
-source file and change date (see below).
-
-For example…
-
-    
-    const configFileProcessorGen=require('qtools-config-file-processor');
-    const configFileProcessor=new configFileProcessorGen();
-    
-    const config=configFileProcessor.getConfig('/Path/to/test.ini')
-    
-    
-    console.dir({"config [test.js.]":config});
-    
-
-Produces…
-
-   
-	{
-		_meta: {
-			configurationSourceFilePath: '/Path/to/test.ini',
-			configurationModificationDate: '6/15/2020, 5:38:55 PM'
-		},
-		system: { hello: 'goodbye' },
-		sectionOne: { animal: 'fish', someList: [Array] },
-		arrayItems: { placeholderKey1: 'sectionOne.someList' }
-	}
-
+**Another optional special section [_includes]** can contain a series of file paths to be merged
+into the main configuration object. The file path can either be fully qualified or 
+a path relative to the directory containing the main configuration.
 
 
 getConfig() also takes a optional second parameter, workingDirectory. 
@@ -81,30 +55,64 @@ and working up.
 
 
 
-getConfig() can take a third parameter, options with these properties:
+**getConfig() can take a third parameter**, options, with these properties:
 
-resolve	when set to true, the program logs the file paths tried in locating a configuration file.
+**`resolve`**	when set to true, the program logs the file paths tried in locating a configuration file.
 
-injectedItems This object is added to the configuration as a new property, 'injectedItems'.
+**`injectedItems`** This object is added to the configuration as a new property, 'injectedItems'.
 
-userSubstitutions	These are applied in the same way as _substitutions elements in the .ini 
+**`userSubstitutions`**	These are applied in the same way as _substitutions elements in the .ini 
 file. They are applied **as strings** first and, consequently, can be used to modify
 the application of _substitutions.
 
-I use it like this:
-
-		if (options.useProdPath) {
-			configOptions = {
-				userSubstitutions: {
-					remoteBasePath: '<!prodRemoteBasePath!>'
-				}
-			};
-		}
-
-This causes getConfigs() to do configFileContentsString.replace('<!remoteBasePath!>', '<!prodRemoteBasePath!>').
+**userSubstitutions causes** getConfigs() to do, eg, `configFileContentsString.replace('<!remoteBasePath!>', '<!prodRemoteBasePath!>')`.
 When _substitutions is processed, all references to remoteBasePath have been revised and result in the config
 being returned with paths that point at production.
 
+_I use it like this:_
+
+>		if (options.useProdPath) {
+>			configOptions = {
+>				userSubstitutions: {
+>					remoteBasePath: '<!prodRemoteBasePath!>'
+>				}
+>			};
+>		}
+
+
+
+**A section named _meta is injected** into the config that identifies the 
+source file and change date (see below) and other stuff that helps debug problems.
+
+For example…
+
+    
+    const configFileProcessorGen=require('qtools-config-file-processor');
+    const configFileProcessor=new configFileProcessorGen();
+    
+    const config=configFileProcessor.getConfig('/Path/to/test.ini')
+    
+    console.dir({"config [test.js.]":config});
+    
+
+Produces…
+
+
+>	{
+>
+>		meta: {
+>			configurationSourceFilePath: '/Path/to/test.ini',
+>			configurationModificationDate: '6/15/2020, 5:38:55 PM'
+>			_substitutions:{},
+>			_includes:['filepath1', 'filepath2'],
+>			injectedItems:{},
+>			userSubstitutions:{}
+>		},
+>		
+>		system: { hello: 'goodbye' },
+>		sectionOne: { animal: 'fish', someList: [Array] },
+>		arrayItems: { placeholderKey1: 'sectionOne.someList' }
+>	}
 
 
 
