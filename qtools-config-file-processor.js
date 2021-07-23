@@ -8,7 +8,7 @@ var qtLib = require('qtools-functional-library');
 //START OF moduleFunction() ============================================================
 
 var moduleFunction = function(args = {}) {
-	const { logger = {}, arrayItemsName = 'arrayItems' } = args;
+	const { logger = {} } = args;
 
 	logger.warn = logger.warn
 		? logger.warn
@@ -16,7 +16,6 @@ var moduleFunction = function(args = {}) {
 	logger.error = logger.error
 		? logger.error
 		: message => console.log(`ERROR: ${message}`);
-	
 
 	const findGoodConfigPath = (pathParm, workingDirectory, resolve) => {
 		let result = fs.existsSync(pathParm) ? fs.realpathSync(pathParm) : '';
@@ -76,8 +75,11 @@ var moduleFunction = function(args = {}) {
 		]
 	});
 
-	this.getConfig = (configPath, workingDirectory = '.', options = {}) => {
-		const { resolve = false } = options;
+	this.getConfig = (configPath, workingDirectory, options = {}) => {
+		const { resolve = false, userSubstitutions, injectedItems } = options;
+		if (!workingDirectory) {
+			workingDirectory = '.';
+		}
 		const configurationSourceFilePath = findGoodConfigPath(
 			configPath,
 			workingDirectory,
@@ -102,15 +104,38 @@ var moduleFunction = function(args = {}) {
 				}
 			});
 
+		//substitutions supplied in args are assumed to be client overrides and are processed
+		//first. That means that the tokens are not available for subsitution by the
+		//values in the file.
+
+		if (typeof options.userSubstitutions == 'object') {
+			const configString = JSON.stringify(config); 
+			 const revisedConfigString = configString.qtTemplateReplace(
+				options.userSubstitutions
+			);
+
+			try {
+				config = JSON.parse(revisedConfigString);
+				config._meta.userSubstitutions = options.userSubstitutions;
+			} catch (err) {
+				throw `qtools-config-files-processor says, 'args._substitutions' processing is actually string processing on JSON.stringify(config). The result does not JSON.parse(revisedConfigString). The error message is ${err.toString()}.`;
+			}
+		}
 
 		if (typeof config._substitutions == 'object') {
 			const configString = JSON.stringify(config);
-			const revisedConfigString = configString.qtTemplateReplace(config._substitutions);
+			const revisedConfigString = configString.qtTemplateReplace(
+				config._substitutions
+			);
 			try {
 				config = JSON.parse(revisedConfigString);
 			} catch (err) {
-				throw `qtools-config-files-processor says, 'substitutions' processing is actually string processing on JSON.stringify(config). The result does not JSON.parse(revisedConfigString). The error message is ${err.toString()}.`;
+				throw `qtools-config-files-processor says, 'config._substitutions' processing is actually string processing on JSON.stringify(config). The result does not JSON.parse(revisedConfigString). The error message is ${err.toString()}.`;
 			}
+		}
+
+		if (injectedItems) {
+			config.injectedItems = injectedItems;
 		}
 
 		return config;

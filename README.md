@@ -71,3 +71,40 @@ Produces…
 		sectionOne: { animal: 'fish', someList: [Array] },
 		arrayItems: { placeholderKey1: 'sectionOne.someList' }
 	}
+
+
+
+getConfig() also takes a optional second parameter, workingDirectory. 
+In this case, the first parameter is the name of a configuration file 
+that is sought in the directory tree starting with the specified directory 
+and working up.
+
+
+
+getConfig() can take a third parameter, options with these properties:
+
+resolve	when set to true, the program logs the file paths tried in locating a configuration file.
+
+injectedItems This object is added to the configuration as a new property, 'injectedItems'.
+
+userSubstitutions	These are applied in the same way as _substitutions elements in the .ini 
+file. They are applied **as strings** first and, consequently, can be used to modify
+the application of _substitutions.
+
+I use it like this:
+
+		if (options.useProdPath) {
+			configOptions = {
+				userSubstitutions: {
+					remoteBasePath: '<!prodRemoteBasePath!>'
+				}
+			};
+		}
+
+This causes getConfigs() to do configFileContentsString.replace('<!remoteBasePath!>', '<!prodRemoteBasePath!>').
+When _substitutions is processed, all references to remoteBasePath have been revised and result in the config
+being returned with paths that point at production.
+
+
+
+
