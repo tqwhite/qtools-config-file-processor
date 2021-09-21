@@ -3,7 +3,8 @@
 const multiIni = require('multi-ini');
 const fs = require('fs');
 const path = require('path');
-var qtLib = require('qtools-functional-library');
+const qtLib = require('qtools-functional-library');
+const multiIniGen = require('multi-ini');
 
 //START OF moduleFunction() ============================================================
 
@@ -45,7 +46,6 @@ var moduleFunction = function(args = {}) {
 		return result;
 	};
 
-	const multiIniGen = require('multi-ini');
 	const multiIni = new multiIniGen.Class({
 		filters: [
 			value => {
@@ -75,12 +75,16 @@ var moduleFunction = function(args = {}) {
 		]
 	});
 
+	let configurationSourceFilePath = '';
+
+	this.getRecentConfigPath = () => configurationSourceFilePath;
+
 	this.getConfig = (configPath, workingDirectory, options = {}) => {
 		const { resolve = false, userSubstitutions, injectedItems } = options;
 		if (!workingDirectory) {
 			workingDirectory = '.';
 		}
-		const configurationSourceFilePath = findGoodConfigPath(
+		configurationSourceFilePath = findGoodConfigPath(
 			configPath,
 			workingDirectory,
 			resolve
@@ -94,18 +98,53 @@ var moduleFunction = function(args = {}) {
 			.statSync(configurationSourceFilePath)
 			.mtime.toLocaleString();
 
-		let config = multiIni
-			.read(configurationSourceFilePath)
-			.qtNumberKeysToArray()
-			.qtMerge({
-				_meta: {
-					configurationSourceFilePath,
-					configurationModificationDate
-				}
-			});
+		const raw = multiIni.read(configurationSourceFilePath);
+
+		let config = raw.qtNumberKeysToArray().qtMerge({
+			_meta: {
+				configurationSourceFilePath,
+				configurationModificationDate
+			}
+		});
 
 		const configString = JSON.stringify(config);
-		const includedFiles=[];
+		const includedFiles = [];
+		const mergeBeforeFiles = [];
+		const mergeAfterFiles = [];
+		const includedRaw = [];
+		const mergeBeforeRaw = [];
+		const mergeAfterRaw = [];
+
+		if (config._mergeBefore && config._mergeBefore.length) {
+			const appendages = config._mergeBefore.map(filePath => {
+				if (!fs.existsSync(filePath)) {
+					const newPath = path.resolve(
+						path.dirname(configurationSourceFilePath),
+						filePath
+					);
+					if (!fs.existsSync(newPath)) {
+						throw `Bad relative file path in _mergeBefore. ${filePath} resolves to ${newPath} which does not exist (From config ${configurationSourceFilePath}.)`;
+					}
+					filePath = newPath;
+				}
+
+				const appendageRaw = multiIni.read(filePath);
+				const appendage = appendageRaw.qtNumberKeysToArray();
+				if (Object.keys(appendage).length == 0) {
+					throw `No properties in _mergeBefore file. This is usually because there is no top level .ini [section]. multiIni insists on this. Bad filepath is ${filePath}`;
+				}
+
+				mergeBeforeFiles.push(filePath);
+				mergeBeforeRaw.push(appendageRaw);
+				return appendage;
+			});
+
+			config = appendages
+				.reduce((result, component) => {
+					return result.qtMerge(component);
+				}, {})
+				.qtMerge(config);
+		}
 
 		if (config._includes && config._includes.length) {
 			const appendages = config._includes.map(filePath => {
@@ -120,18 +159,51 @@ var moduleFunction = function(args = {}) {
 					filePath = newPath;
 				}
 
-				const appendage = multiIni.read(filePath).qtNumberKeysToArray();
+				const appendageRaw = multiIni.read(filePath);
+				const appendage = appendageRaw.qtNumberKeysToArray();
 				if (Object.keys(appendage).length == 0) {
 					throw `No properties in _merge file. This is usually because there is no top level .ini [section]. multiIni insists on this. Bad filepath is ${filePath}`;
 				}
-	
+
 				includedFiles.push(filePath);
+				includedRaw.push(appendageRaw);
 				return appendage;
 			});
 
 			config = appendages.reduce((result, component) => {
 				return result.qtMerge(component);
 			}, config);
+		}
+
+		if (config._mergeAfter && config._mergeAfter.length) {
+			const appendages = config._mergeAfter.map(filePath => {
+				if (!fs.existsSync(filePath)) {
+					const newPath = path.resolve(
+						path.dirname(configurationSourceFilePath),
+						filePath
+					);
+					if (!fs.existsSync(newPath)) {
+						throw `Bad relative file path in _mergeAfter. ${filePath} resolves to ${newPath} which does not exist (From config ${configurationSourceFilePath}.)`;
+					}
+					filePath = newPath;
+				}
+
+				const appendageRaw = multiIni.read(filePath);
+				const appendage = appendageRaw.qtNumberKeysToArray();
+				if (Object.keys(appendage).length == 0) {
+					throw `No properties in _mergeAfter file. This is usually because there is no top level .ini [section]. multiIni insists on this. Bad filepath is ${filePath}`;
+				}
+
+				mergeAfterFiles.push(filePath);
+				mergeAfterRaw.push(appendageRaw);
+				return appendage;
+			});
+
+			config = config.qtMerge(
+				appendages.reduce((result, component) => {
+					return result.qtMerge(component);
+				}, {})
+			);
 		}
 
 		//substitutions supplied in args are assumed to be client overrides and are processed
@@ -143,7 +215,6 @@ var moduleFunction = function(args = {}) {
 			const revisedConfigString = configString.qtTemplateReplace(
 				options.userSubstitutions
 			);
-			
 
 			try {
 				config = JSON.parse(revisedConfigString);
@@ -168,12 +239,19 @@ var moduleFunction = function(args = {}) {
 		if (injectedItems) {
 			config.injectedItems = injectedItems;
 		}
-		
-		config._meta._substitutions=config._substitutions;
-		config._meta._includes=includedFiles;
+
+		config._meta._substitutions = config._substitutions;
+		config._meta._includes = includedFiles;
+		config._meta._mergeBefore = mergeBeforeFiles;
+		config._meta._mergeAfter = mergeAfterFiles;
+		config._meta._mainRaw = raw;
+		config._meta._includedRaw = includedRaw;
+		config._meta._mergeBeforeRaw = mergeBeforeRaw;
+		config._meta._mergeAfterRaw = mergeAfterRaw;
 
 		return config;
 	};
+	return this;
 };
 
 //END OF moduleFunction() ============================================================

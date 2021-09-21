@@ -1,5 +1,7 @@
 # qTools Config File Processor
 
+__CONVERTS .INI FILES TO JS OBJECTS WITH SANE DATA TYPES__
+
 Opens a .ini file and places it’s contents into a Javascript object
 _after_ converting values as best it can. It also adds information about
 the .ini file.
@@ -22,13 +24,36 @@ Instead of the default,
 
     {‘0’:’zero’, ‘1’:’one’}
 
+__OPTIONAL: ASSEMBLING A CONFIGURATION INCLUDING OTHER FILES__
 
-**A special .ini section, ``_substitutions``, can be added**, substitutions,
+**TWO optional special sections ``[_mergeBefore]`` and ``[_mergeAfter]``** can contain a series of file paths to be merged
+into the main configuration object. The file path can either be fully qualified or 
+a path *relative* to the directory containing the main configuration.
+
+_mergeAfter files contains properties that overwrite any existing values in the main config
+including those from _mergeBefore and _includes.
+
+_mergeBefore files are merged into a JSON object in the order presented. That is later files
+overwrite values already present. These values are, in turn, overwritten by values from any
+_includes files then the main configuration and finally any _mergeAfter files (in order).
+
+*DEPRECATED* Another optional special section ``[_includes]`` can contain a series of file paths to be merged
+into the main configuration object. The file path can either be fully qualified or 
+a path relative to the directory containing the main configuration.
+
+
+
+**A special .ini section, ``[_substitutions]``, can be added**, substitutions,
 whose elements are substituted __as strings__ into a JSON version of the
 config using .qtTemplateReplace() tags, eg, <!substitutionTag!>. The
 _substitutions section is left in the config. Only use values that
 convert to strings in ways that work for your application. (File path
-segments are really good.)
+segments are a really good use.)
+    
+The _substitutions section is applied by converting the configuration object JSON (after 
+_mergeBefore, _includes and _mergeAfter are applied) and then replacing the substitution
+tags with values from the _substitutions section.
+
 
 Eg,
 	
@@ -43,31 +68,33 @@ will be presented as
 
     console.log(testSection.HELLO_Name); //=> 'This is a test'
 
-**Another optional special section [_includes]** can contain a series of file paths to be merged
-into the main configuration object. The file path can either be fully qualified or 
-a path relative to the directory containing the main configuration.
 
+__OPTIONAL: CONFIG LOCATION SEARCH__
 
-getConfig() also takes a optional second parameter, workingDirectory. 
+**getConfig() also takes a optional second parameter**, workingDirectory. 
 In this case, the first parameter is the name of a configuration file 
 that is sought in the directory tree starting with the specified directory 
 and working up.
-
-
 
 **getConfig() can take a third parameter**, options, with these properties:
 
 **`resolve`**	when set to true, the program logs the file paths tried in locating a configuration file.
 
-**`injectedItems`** This object is added to the configuration as a new property, 'injectedItems'.
+
+
+__OPTIONAL: RUNTIME CONFIGURATION MODIFICATIONS__
+
+**`injectedItems`** This object is added (*not* merged) to the configuration as a new property, 'injectedItems'.
 
 **`userSubstitutions`**	These are applied in the same way as _substitutions elements in the .ini 
-file. They are applied **as strings** first and, consequently, can be used to modify
-the application of _substitutions.
+file. These are applied to the stringified version of the fully merged object *before* the
+substitutions in the file. Consequently, they can be used to replace replacement tags in
+the _substitution section of the main config. Eg, 
 
-**userSubstitutions causes** getConfigs() to do, eg, `configFileContentsString.replace('<!remoteBasePath!>', '<!prodRemoteBasePath!>')`.
-When _substitutions is processed, all references to remoteBasePath have been revised and result in the config
-being returned with paths that point at production.
+`configFileContentsString.replace('<!remoteBasePath!>', '<!prodRemoteBasePath!>')`.
+
+By the time _substitutions is processed, all references to remoteBasePath have been changed
+to prodRemoteBasePath and that is substituted into the final JS config object.
 
 _I use it like this:_
 
@@ -80,6 +107,9 @@ _I use it like this:_
 >		}
 
 
+
+
+__DEBUGGING HELP IS PLACED IN THE__ _meta __PROPERTY__
 
 **A section named _meta is injected** into the config that identifies the 
 source file and change date (see below) and other stuff that helps debug problems.
@@ -104,7 +134,9 @@ Produces…
 >			configurationSourceFilePath: '/Path/to/test.ini',
 >			configurationModificationDate: '6/15/2020, 5:38:55 PM'
 >			_substitutions:{},
+>			_mergeBefore:['filepatha', 'filepathb'],
 >			_includes:['filepath1', 'filepath2'],
+>			_mergeAfter:['filepathx', 'filepathy'],
 >			injectedItems:{},
 >			userSubstitutions:{}
 >		},
