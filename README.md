@@ -23,6 +23,17 @@ will be presented as
 Instead of the default,
 
     {‘0’:’zero’, ‘1’:’one’}
+    
+__SUBSTITUTES CERTAIN VALUES INTO STRINGS__
+
+Two special values are subsituted __as strings__ into a JSON version of the
+config using .qtTemplateReplace() tags.
+
+<!userHomeDir!> will be replaced with the users home directory ($HOME, via, os.homedir()).
+
+<!configDir!> is replaced with the parent directory of the configuration file being processed
+
+For more details about substitutions, see _substitutions below.
 
 __OPTIONAL: ASSEMBLING A CONFIGURATION INCLUDING OTHER FILES__
 

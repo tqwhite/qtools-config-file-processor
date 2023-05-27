@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const qtLib = require('qtools-functional-library');
 const multiIniGen = require('multi-ini');
+const os=require('os');
 
 //START OF moduleFunction() ============================================================
 
@@ -228,6 +229,22 @@ var moduleFunction = function(args = {}) {
 			const configString = JSON.stringify(config);
 			const revisedConfigString = configString.qtTemplateReplace(
 				config._substitutions
+			);
+			try {
+				config = JSON.parse(revisedConfigString);
+			} catch (err) {
+				throw `qtools-config-files-processor says, 'config._substitutions' processing is actually string processing on JSON.stringify(config). The result does not JSON.parse(revisedConfigString). The error message is ${err.toString()}.`;
+			}
+		}
+
+		if ('always substitute system items') {
+			const configString = JSON.stringify(config);
+			const revisedConfigString = configString.qtTemplateReplace(
+				{
+					userHomeDir:os.homedir(),
+					configsDir:path.dirname(configurationSourceFilePath)
+				
+				}
 			);
 			try {
 				config = JSON.parse(revisedConfigString);
