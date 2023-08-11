@@ -104,6 +104,7 @@ var moduleFunction = function(args = {}) {
 		let config = raw.qtNumberKeysToArray().qtMerge({
 			_meta: {
 				configurationSourceFilePath,
+				configsDirPath:path.dirname(configurationSourceFilePath),
 				configurationModificationDate
 			}
 		});
