@@ -158,4 +158,9 @@ Produces…
 >	}
 
 
+UPDATES
+
+v1.0.16 - no functional changes. Verified correct processing of merge and substitute,
+formatting and comments.
+
 

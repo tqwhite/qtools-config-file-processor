@@ -5,19 +5,19 @@ const fs = require('fs');
 const path = require('path');
 const qtLib = require('qtools-functional-library');
 const multiIniGen = require('multi-ini');
-const os=require('os');
+const os = require('os');
 
 //START OF moduleFunction() ============================================================
 
-var moduleFunction = function(args = {}) {
+var moduleFunction = function (args = {}) {
 	const { logger = {} } = args;
 
 	logger.warn = logger.warn
 		? logger.warn
-		: message => console.log(`WARNING: ${message}`);
+		: (message) => console.log(`WARNING: ${message}`);
 	logger.error = logger.error
 		? logger.error
-		: message => console.log(`ERROR: ${message}`);
+		: (message) => console.log(`ERROR: ${message}`);
 
 	const findGoodConfigPath = (pathParm, workingDirectory, resolve) => {
 		let result = fs.existsSync(pathParm) ? fs.realpathSync(pathParm) : '';
@@ -49,7 +49,7 @@ var moduleFunction = function(args = {}) {
 
 	const multiIni = new multiIniGen.Class({
 		filters: [
-			value => {
+			(value) => {
 				if (value == /^''$/) {
 					return value;
 				}
@@ -72,8 +72,8 @@ var moduleFunction = function(args = {}) {
 				}
 
 				return value;
-			}
-		]
+			},
+		],
 	});
 
 	let configurationSourceFilePath = '';
@@ -88,7 +88,7 @@ var moduleFunction = function(args = {}) {
 		configurationSourceFilePath = findGoodConfigPath(
 			configPath,
 			workingDirectory,
-			resolve
+			resolve,
 		);
 		if (!configurationSourceFilePath) {
 			logger.error(`no config file found ${configPath}`);
@@ -104,9 +104,9 @@ var moduleFunction = function(args = {}) {
 		let config = raw.qtNumberKeysToArray().qtMerge({
 			_meta: {
 				configurationSourceFilePath,
-				configurationDirectoryPath:path.dirname(configurationSourceFilePath),
-				configurationModificationDate
-			}
+				configurationDirectoryPath: path.dirname(configurationSourceFilePath),
+				configurationModificationDate,
+			},
 		});
 
 		const configString = JSON.stringify(config);
@@ -118,11 +118,11 @@ var moduleFunction = function(args = {}) {
 		const mergeAfterRaw = [];
 
 		if (config._mergeBefore && config._mergeBefore.length) {
-			const appendages = config._mergeBefore.map(filePath => {
+			const appendages = config._mergeBefore.map((filePath) => {
 				if (!fs.existsSync(filePath)) {
 					const newPath = path.resolve(
 						path.dirname(configurationSourceFilePath),
-						filePath
+						filePath,
 					);
 					if (!fs.existsSync(newPath)) {
 						throw `Bad relative file path in _mergeBefore. ${filePath} resolves to ${newPath} which does not exist (From config ${configurationSourceFilePath}.)`;
@@ -149,11 +149,11 @@ var moduleFunction = function(args = {}) {
 		}
 
 		if (config._includes && config._includes.length) {
-			const appendages = config._includes.map(filePath => {
+			const appendages = config._includes.map((filePath) => {
 				if (!fs.existsSync(filePath)) {
 					const newPath = path.resolve(
 						path.dirname(configurationSourceFilePath),
-						filePath
+						filePath,
 					);
 					if (!fs.existsSync(newPath)) {
 						throw `Bad relative file path. ${filePath} resolves to ${newPath} which does not exist (From config ${configurationSourceFilePath}.)`;
@@ -178,11 +178,11 @@ var moduleFunction = function(args = {}) {
 		}
 
 		if (config._mergeAfter && config._mergeAfter.length) {
-			const appendages = config._mergeAfter.map(filePath => {
+			const appendages = config._mergeAfter.map((filePath) => {
 				if (!fs.existsSync(filePath)) {
 					const newPath = path.resolve(
 						path.dirname(configurationSourceFilePath),
-						filePath
+						filePath,
 					);
 					if (!fs.existsSync(newPath)) {
 						throw `Bad relative file path in _mergeAfter. ${filePath} resolves to ${newPath} which does not exist (From config ${configurationSourceFilePath}.)`;
@@ -204,7 +204,7 @@ var moduleFunction = function(args = {}) {
 			config = config.qtMerge(
 				appendages.reduce((result, component) => {
 					return result.qtMerge(component);
-				}, {})
+				}, {}),
 			);
 		}
 
@@ -215,7 +215,7 @@ var moduleFunction = function(args = {}) {
 		if (typeof options.userSubstitutions == 'object') {
 			const configString = JSON.stringify(config);
 			const revisedConfigString = configString.qtTemplateReplace(
-				options.userSubstitutions
+				options.userSubstitutions,
 			);
 
 			try {
@@ -229,7 +229,20 @@ var moduleFunction = function(args = {}) {
 		if (typeof config._substitutions == 'object') {
 			const configString = JSON.stringify(config);
 			const revisedConfigString = configString.qtTemplateReplace(
-				config._substitutions
+				config._substitutions,
+			);
+			try {
+				config = JSON.parse(revisedConfigString);
+			} catch (err) {
+				throw `qtools-config-files-processor says, 'config._substitutions' processing is actually string processing on JSON.stringify(config). The result does not JSON.parse(revisedConfigString). The error message is ${err.toString()}.`;
+			}
+		}
+
+		// substitution processing is done twice to allow substituted items to have substitutions.
+		if (typeof config._substitutions == 'object') {
+			const configString = JSON.stringify(config);
+			const revisedConfigString = configString.qtTemplateReplace(
+				config._substitutions,
 			);
 			try {
 				config = JSON.parse(revisedConfigString);
@@ -240,13 +253,10 @@ var moduleFunction = function(args = {}) {
 
 		if ('always substitute system items') {
 			const configString = JSON.stringify(config);
-			const revisedConfigString = configString.qtTemplateReplace(
-				{
-					userHomeDir:os.homedir(),
-					configsDir:path.dirname(configurationSourceFilePath)
-				
-				}
-			);
+			const revisedConfigString = configString.qtTemplateReplace({
+				userHomeDir: os.homedir(),
+				configsDir: path.dirname(configurationSourceFilePath),
+			});
 			try {
 				config = JSON.parse(revisedConfigString);
 			} catch (err) {
