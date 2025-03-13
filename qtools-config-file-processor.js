@@ -252,10 +252,12 @@ var moduleFunction = function (args = {}) {
 		}
 
 		if ('always substitute system items') {
+			const findProjectRoot=({rootFolderName='system', closest=true}={})=>__dirname.replace(new RegExp(`^(.*${closest?'':'?'}\/${rootFolderName}).*$`), "$1");
 			const configString = JSON.stringify(config);
 			const revisedConfigString = configString.qtTemplateReplace({
 				userHomeDir: os.homedir(),
 				configsDir: path.dirname(configurationSourceFilePath),
+				projectRoot:findProjectRoot()
 			});
 			try {
 				config = JSON.parse(revisedConfigString);

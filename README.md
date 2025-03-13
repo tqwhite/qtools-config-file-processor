@@ -47,6 +47,8 @@ config using .qtTemplateReplace() (see [qtools-functional-library](https://www.n
 
 **<!configDir!>** is replaced with the parent directory of the configuration file being processed
 
+**<!projectRoot!>** is replaced with the first parent directory named 'system' above the config dir
+
 For more details about substitutions, see _substitutions below.
 
 __OPTIONAL: ASSEMBLING A CONFIGURATION INCLUDING OTHER FILES__
@@ -158,3 +160,5 @@ __CHANGE LOG__
 v1.0.16 - no functional changes. Verified correct processing of merge and substitute, applied code formatting and added comments.
 
 v1.0.17 - no functional changes. README changes only.
+
+v1.0.18 - added projectRoot substitution
