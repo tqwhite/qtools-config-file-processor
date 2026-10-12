@@ -162,3 +162,5 @@ v1.0.16 - no functional changes. Verified correct processing of merge and substi
 v1.0.17 - no functional changes. README changes only.
 
 v1.0.18 - added projectRoot substitution
+
+v1.0.19 - License changed to MIT (was ISC). No code changes.
